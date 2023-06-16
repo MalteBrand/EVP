@@ -42,33 +42,36 @@ for i=1:len_b
     V0 = V0 + l_stb(i)*x0(i);
 end
 
-x0 = [A0;u0];
+x0 = A0;
 
 fhf = @(x) ziel(x, E, k, b, BCs, loads, OpKnoten);
-fhgtb = @(x) nebenBedingungen4toolbox(x, rmin, rmax, k, b, V0);
+fhgtb = @(x) nebenBedingungen4toolbox(x, rmin, rmax, l_stb, V0);
 
 %Optimierung mit SQP
 options = optimoptions('fmincon','Algorithm','sqp','Display','iter');
 x_opt = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options);
 
-A = x_opt(1:len_b);
-u = x_opt((len_b+1):end);
+A = x_opt;
+EAs = E*A;
+u = trussFEM2D.solve(k,b,EAs,BCs,loads);
 
 rs = sqrt(A(1:len_b))/pi;
 
 trussFEM2D.plotTruss2D(k,b,rs,3,u);
 
 function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
+    len = length(x);
+    A = x;
 
-    %Berechnung der Verschiebung in Knoten 26 für gegebene Querschnitte
-    EAs = E*x;
+    EAs = E*A;
     u = - trussFEM2D.solve(k,b,EAs,BCs,loads);
+    %Es soll die y-Verschiebung in Knoten 26 optimiert werden
     f = u(2 * OpKnoten);
     
-    %
-    dx = 0.0001;
-    u_p =  trussFEM2D.solve(k,b,EAs + dx*ones(length(x)),BCs,loads); %dx muss noch in u plus dx eingebaut werden
-    u_m =  trussFEM2D.solve(k,b,EAs - dx*ones(length(x)),BCs,loads);
+    %Finite Differenzen
+    dx = 0.00001;
+    u_p =  trussFEM2D.solve(k,b,EAs + dx*ones(len),BCs,loads); %dx muss noch in u plus dx eingebaut werden
+    u_m =  trussFEM2D.solve(k,b,EAs - dx*ones(len),BCs,loads);
     u_p = u_p(2 * OpKnoten);
     u_m = u_m(2 * OpKnoten);
     
@@ -77,29 +80,31 @@ function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
     ddf = (u_p-2*u+u_m)/dx^2; 
 end
 
-function g = ungl_bed(x, rmin, rmax, b)
-    len_b = length(b);
-    
-    g(1:len_b)                = x(1:len_b) - pi*rmin^2; 
-    g( (len_b+1):(2*len_b) )  = pi*rmax^2 - x(1:len_b);
+function g = ungl_bed(x, rmin, rmax)
+    len = length(x);
+    g(1:len)                = x - pi*rmin^2; 
+    g( (len+1):(2*len) )    = pi*rmax^2 - x;
 end
-function h = gl_bed(x, k, b, V0)
-    len_b = length(b);
+function h = gl_bed(x, l_stb, V0)
+%     len_b = length(b);
+%     u = x( (len_b+1):end );
+%     
+%     k = k+[u(1:2:end), u(1:2:end)];
+%     
+%     V = 0;
+% 
+%     l_stb = zeros(len_b,1);
+%     for i=1:len_b
+%         l_stb(i) = sqrt( ( k(b(i,1),1)-k(b(i,2),1) )^2 + ( k(b(i,1),2)-k(b(i,2),2) )^2 );
+%         V = V + l_stb(i)*x(i);
+%     end
     
-    k = k+[x((len_b+1):2:end), x((len_b+2):2:end)];
-    
-    V = 0;
-
-    l_stb = zeros(len_b,1);
-    for i=1:len_b
-        l_stb(i) = sqrt( ( k(b(i,1),1)-k(b(i,2),1) )^2 + ( k(b(i,1),2)-k(b(i,2),2) )^2 );
-        V = V + l_stb(i)*x(i);
-    end
+    V = sum(l_stb .* x);
     
     h = V - V0; 
 end
 
-function [nb,nbeq] = nebenBedingungen4toolbox(x, rmin, rmax, k, b, V0)
-    nb = ungl_bed(x, rmin, rmax, b);
-    nbeq = gl_bed(x, k, b, V0);
+function [nb,nbeq] = nebenBedingungen4toolbox(x, rmin, rmax, l_stb, V0)
+    nb = ungl_bed(x, rmin, rmax);
+    nbeq = gl_bed(x, l_stb, V0);
 end
