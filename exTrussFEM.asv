@@ -33,14 +33,18 @@ OpKnoten = 26;
 x0 = r0^2*pi*ones(nob,1);
 
 fhf = @(x, E, k, b, BCs, loads) ziel(x, E, k, b, BCs, loads);
-fhgtb = @(x) nebenBedingungen4toolbox(x);
+fhg = @(x, rmin, rmax) ungl_bed(x, rmin, rmax);
+fhh = @(x, V0) gl_bed(x, V0);
 
 %Optimierung mit SQP
+fhgtb = @(x) nebenBedingungen4toolbox(x);
 options = optimoptions('fmincon','Algorithm','sqp','Display','iter');
-x_tb = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options);
+x_tb = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options)
 
 function [f,df,ddf] = ziel(x, E, k, b, BCs, loads)
-
+    
+    %Parameter
+    
     %Berechnung der Verschiebung in Knoten 26 für gegebene Querschnitte
     EAs = E*x;
     u = trussFEM2D.solve(k,b,EAs,BCs,loads);
