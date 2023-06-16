@@ -1,4 +1,4 @@
-%% Berechnung einer ReferenzverschiebungHola mes amigo
+%% Berechnung einer Referenzverschiebung
 % Parameters
 n=11; m=5; %n Number nodes Horizonal %m Number of Nodes Vertical 
 dx = 0.4;  dy = 0.3; %Abstand der einzelnen Knoten in x und y Richtung
