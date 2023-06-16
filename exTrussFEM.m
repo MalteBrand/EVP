@@ -28,18 +28,23 @@ loads = [(floor(n/2)+1)*m, 2, Fex];
 u0 = trussFEM2D.solve(k,b,EAs,BCs,loads);
 trussFEM2D.plotTruss2D(k,b,rs,2,u0);
 
-%% Startwert für die Verschiebung in Punkt P bzw. Knoten 26 
-OpKnoten = 26;
+%% Aufgabe 1 b)
+OpKnoten = 26; % Startwert für die Verschiebung in Punkt P bzw. Knoten 26 
 x0 = r0^2*pi*ones(nob,1);
+rmin = 0.0001; %min Querschnittsradius
+rmax = 0.01; %max Querschnittsradius
+% Loads and Boundary conditons
+BCs = [1,1; 1,2;   m,1; m,2];
+V0 = sum(A0); % Muss noch hier angepasst werden
 
-fhf = @(x, E, k, b, BCs, loads) ziel(x, E, k, b, BCs, loads);
-fhgtb = @(x) nebenBedingungen4toolbox(x);
+fhf = @(x) ziel(x, E, k, b, BCs, loads, OpKnoten);
+fhgtb = @(x) nebenBedingungen4toolbox(x, rmin, rmax, V0);
 
 %Optimierung mit SQP
 options = optimoptions('fmincon','Algorithm','sqp','Display','iter');
 x_tb = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options);
 
-function [f,df,ddf] = ziel(x, E, k, b, BCs, loads)
+function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
 
     %Berechnung der Verschiebung in Knoten 26 für gegebene Querschnitte
     EAs = E*x;
@@ -63,13 +68,11 @@ function g = ungl_bed(x, rmin, rmax)
     g(1:n) = x - pi*rmin^2; 
     g(n+1:end) = pi*rmax^2 - x;
 end
-function h = gl_bed(x, V0)
-    % Stablängen l muss hier noch berechnet werden
-    
+function h = gl_bed(x, V0)   
     h = sum(x*l) - V0; 
 end
 
-function [nb,nbeq] = nebenBedingungen4toolbox(x)
-    nb = ungl_bed(x);
-    nbeq = gl_bed(x);
+function [nb,nbeq] = nebenBedingungen4toolbox(x, rmin, rmax, V0)
+    nb = ungl_bed(x, rmin, rmax);
+    nbeq = gl_bed(x, V0);
 end
