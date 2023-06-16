@@ -57,7 +57,8 @@ u = trussFEM2D.solve(k,b,EAs,BCs,loads);
 
 rs = sqrt(A(1:len_b))/pi;
 
-trussFEM2D.plotTruss2D(k,b,rs,3,u);
+trussFEM2D.plotTruss2D(k,b,rs,3);
+trussFEM2D.plotTruss2D(k,b,rs,4,u);
 
 function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
     len = length(x);
@@ -86,18 +87,6 @@ function g = ungl_bed(x, rmin, rmax)
     g( (len+1):(2*len) )    = pi*rmax^2 - x;
 end
 function h = gl_bed(x, l_stb, V0)
-%     len_b = length(b);
-%     u = x( (len_b+1):end );
-%     
-%     k = k+[u(1:2:end), u(1:2:end)];
-%     
-%     V = 0;
-% 
-%     l_stb = zeros(len_b,1);
-%     for i=1:len_b
-%         l_stb(i) = sqrt( ( k(b(i,1),1)-k(b(i,2),1) )^2 + ( k(b(i,1),2)-k(b(i,2),2) )^2 );
-%         V = V + l_stb(i)*x(i);
-%     end
     
     V = sum(l_stb .* x);
     
