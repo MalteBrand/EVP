@@ -33,7 +33,7 @@ OpKnoten = (floor(n/2)*m) + 1; % Startwert für die Verschiebung in Punkt P bzw.
 A0 = r0^2*pi*ones(nob,1); %Anfangsquerschnitte
 rmin = 0.0001; %min Querschnittsradius
 rmax = 0.01; %max Querschnittsradius
-
+x0 = A0;
 V0 = 0;
 len_b = length(b);
 l_stb = zeros(len_b,1);
@@ -41,8 +41,6 @@ for i=1:len_b
     l_stb(i) = sqrt( ( k(b(i,1),1)-k(b(i,2),1) )^2 + ( k(b(i,1),2)-k(b(i,2),2) )^2 );
     V0 = V0 + l_stb(i)*x0(i);
 end
-
-x0 = A0;
 
 fhf = @(x) ziel(x, E, k, b, BCs, loads, OpKnoten);
 fhgtb = @(x) nebenBedingungen4toolbox(x, rmin, rmax, l_stb, V0);
@@ -65,20 +63,38 @@ function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
     A = x;
 
     EAs = E*A;
-    u = - trussFEM2D.solve(k,b,EAs,BCs,loads);
+    
+    %Berechnung der Verschiebung
+    [u,force,Ke,K] = trussFEM2D.solve(k,b,EAs,BCs,loads); %Da die Verschiebung auch positv werden kann, wird der Betrag der Verschiebung minimiert    
+    u = -u;
+    
+    for i=1:length(Ke)
+        %Gradienten bestimmen
+        e = zeros(length(u)-20,1);
+        e((2*OpKnoten)-10) = 1; %e ist für die zu optimierende Verschiebung 1 sonst 0
+        lambda = K\-e;
+        lambda = [zeros(10,1);lambda;zeros(10,1)];
+        dKdA = Ke(:,:,i)/x(i);
+        dAdr = 2*pi*sqrt(x(i)/pi);
+        dKdx = dKdA*dAdr;
+        u_e = [u(2*b(i,1)-1); u(2*b(i,1)); u(2*b(i,2)-1); u(2*b(i,2))];
+        lambda_e = [lambda(2*b(i,1)-1); lambda(2*b(i,1)); lambda(2*b(i,2)-1); lambda(2*b(i,2))];
+        duKdx(1,i) = lambda_e' * dKdx * u_e;
+    end
     %Es soll die y-Verschiebung in Knoten 26 optimiert werden
     f = u(2 * OpKnoten);
-    
-    %Finite Differenzen
-    dx = 0.00001;
-    u_p =  trussFEM2D.solve(k,b,EAs + dx*ones(len),BCs,loads); %dx muss noch in u plus dx eingebaut werden
-    u_m =  trussFEM2D.solve(k,b,EAs - dx*ones(len),BCs,loads);
-    u_p = u_p(2 * OpKnoten);
-    u_m = u_m(2 * OpKnoten);
-    
-    %Berechnung der Ableitungen über finite Differenzen
-    df = (u_p-u_m)/(2*dx);
-    ddf = (u_p-2*u+u_m)/dx^2; 
+    df = duKdx;
+    ddf = zeros(174,174);
+%     %Finite Differenzen
+%     dx = 0.00001;
+%     u_p =  trussFEM2D.solve(k,b,EAs + dx*ones(len),BCs,loads); %dx muss noch in u plus dx eingebaut werden
+%     u_m =  trussFEM2D.solve(k,b,EAs - dx*ones(len),BCs,loads);
+%     u_p = u_p(2 * OpKnoten);
+%     u_m = u_m(2 * OpKnoten);
+%     
+%     %Berechnung der Ableitungen über finite Differenzen
+%     df = (u_p-u_m)/(2*dx);
+%     ddf = (u_p-2*u+u_m)/dx^2; 
 end
 
 function g = ungl_bed(x, rmin, rmax)
