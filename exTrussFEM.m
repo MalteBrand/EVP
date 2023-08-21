@@ -67,23 +67,9 @@ function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
     %Berechnung der Verschiebung
     [u,force,Ke,K] = trussFEM2D.solve(k,b,EAs,BCs,loads); %Da die Verschiebung auch positv werden kann, wird der Betrag der Verschiebung minimiert    
     u = -u;
-    
-    for i=1:length(Ke)
-        %Gradienten bestimmen
-        e = zeros(length(u)-20,1);
-        e((2*OpKnoten)-10) = 1; %e ist für die zu optimierende Verschiebung 1 sonst 0
-        lambda = K\-e;
-        lambda = [zeros(10,1);lambda;zeros(10,1)];
-        dKdA = Ke(:,:,i)/x(i);
-        dAdr = 2*pi*sqrt(x(i)/pi);
-        dKdx = dKdA*dAdr;
-        u_e = [u(2*b(i,1)-1); u(2*b(i,1)); u(2*b(i,2)-1); u(2*b(i,2))];
-        lambda_e = [lambda(2*b(i,1)-1); lambda(2*b(i,1)); lambda(2*b(i,2)-1); lambda(2*b(i,2))];
-        duKdx(1,i) = lambda_e' * dKdx * u_e;
-    end
     %Es soll die y-Verschiebung in Knoten 26 optimiert werden
     f = u(2 * OpKnoten);
-    df = duKdx;
+    df = gradf(Ke, K, u, x, b, OpKnoten);
     ddf = zeros(174,174);
 %     %Finite Differenzen
 %     dx = 0.00001;

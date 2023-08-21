@@ -1,5 +1,5 @@
 
-anzRealMC = ??;  % Anzahl Realisierungen für Monte Carlo Simulation
+anzRealMC = 1000;  % Anzahl Realisierungen für Monte Carlo Simulation
 
 Aufg1()
 
