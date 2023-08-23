@@ -1,42 +1,80 @@
 function Aufg2(anzRealMC)
+anzRealMC = 10000;
+
+addpath(fullfile(".", "Verteilungen"))
+
+[n,m,rmin,rmax,dx,dy,r0,A,E,Fex,k,b,nob,EAs,rs,BCs,loads] = preprocess();
+
+OpKnoten = (floor(n/2)*m) + 1;
 
 %% Aufgabenteil a) Monte-Carlo
-% Parameters
-mu_X = 0; %Erwartungswert von Kraft F in kN
-sig_X = 15; %Standardabweichung in kN
-cov_X = sig_X ^ 2; % Covarianz nur Skalar, da nur eine Eingangsgröße
 
-OpKnoten = (floor(n/2)*m) + 1; % Startwert für die Verschiebung in Punkt P bzw. Knoten 26 
-
-n=11; m=5; %n Number nodes Horizonal %m Number of Nodes Vertical 
-dx = 0.4;  dy = 0.3; %Abstand der einzelnen Knoten in x und y Richtung
-rmin = 0.0001; %min Querschnittsradius
-rmax = 0.01; %max Querschnittsradius
-r0 = 0.005; %Startraduis
-A = r0^2*pi; %Querschnittsfläche
-E = 210 *10^6; %E-Modul
-Fex = -100; %Äußere Kraft
-% create geometry & plot initial configuration
-[k,b] = trussFEM2D.truss_preProcess2D(n,m,dx,dy); %k Positionen der Knoten %b Welche Knoten miteinander Verbunden sind
-nob=size(b,1);
-EAs = E*A*ones(nob,1);
-rs = r0*ones(nob,1);
-trussFEM2D.plotTruss2D(k,b,rs,1);
-% Loads and Boundary conditons
-BCs = [1,1; 1,2;   m,1; m,2];
-ii=1;
-for i=[1:m,n*m-m+1:n*m]
-    BCs(ii,:) = [i,1];
-    ii=ii+1;
-    BCs(ii,:) = [i,2];
-    ii=ii+1;
-end
-
+loads = [(floor(n/2)+1)*m, 1, 15;
+        (floor(n/2)+1)*m, 2, Fex];
+u = trussFEM2D.solve(k,b,EAs,BCs,loads); %Verschiebung
+u = u(OpKnoten-1:OpKnoten);
 %Schleife über die Anzahl der Realisierungen
 for i=1:anzRealMC
     x(i) = sig_X .* randn + mu_X; %Erzeugen einer normalverteilten Zufallszahl
-    loads = [(floor(n/2)+1)*m, 1, x(i), (floor(n/2)+1)*m, 2, Fex]; %Zufallszahl in den Kraftvektor stecken
+    loads = [(floor(n/2)+1)*m, 1, x(i);
+             (floor(n/2)+1)*m, 2, Fex]; %Zufallszahl in den Kraftvektor stecken
     u = trussFEM2D.solve(k,b,EAs,BCs,loads); %Verschiebungsw
+    g(i,1) = u(OpKnoten-1);
+    g(i,2) = u(OpKnoten);
+    
+end
+
+%%Auswertung
+mu_MC = mean(g )
+var_MC = var(g )
+g = sort(g );
+g(round(0.01*anzRealMC))
+
+x = g;
+EX = mu_MC;
+VarX = var_MC;
+
+[a,b] = EX_VarX_to_GumbelDistribution(EX, VarX);
+fh = @(x) cdf_GumbelDistribution(x,a,b);
+[accept,dmax] = K_S_test_fh(x,fh)
+
+[mue,sigma] = EX_VarX_to_LogNormalDistribution(EX, VarX);
+fh = @(x) cdf_LogNormalDistribution(x,mue,sigma);
+[accept,dmax] = K_S_test_fh(x,fh)
+
+fh = @(x) cdf_NormalDistribution(x,EX, VarX);
+[accept,dmax] = K_S_test_fh(x,fh)
+
+au = min(x); bu = max(x);
+fh = @(x) cdf_UniformDistribution(x,au,bu);
+[accept,dmax] = K_S_test_fh(x,fh)
+
+%% Aufgabenteil a) FOSM
+loads = [(floor(n/2)+1)*m, 1, mu_X;
+         (floor(n/2)+1)*m, 2, Fex];
+u = trussFEM2D.solve(k,b,EAs,BCs,loads);
+mu_g = u( (OpKnoten-1):OpKnoten );
+loads = [(floor(n/2)+1)*m, 1, 1];
+dudx = trussFEM2D.solve(k,b,EAs,BCs,loads);
+sig_g = (dudx( (OpKnoten-1):OpKnoten )).^2 * cov_X;
+
+%%Aufgabenteil b) Monte-Carlo
+mu = k; %Erwartungswert entspricht den unverschobenen Knotenpositionen
+sig_stat = 0.03; % 10% der kleinsten Stablänge
+lc = 1.5; %Korrelationslänge
+
+loads = [(floor(n/2)+1)*m, 2, Fex]; %Karftvektor zurücksetzen
+
+[CovMa,CovSq] = Zufallsfeld(mu_stat, sig_stat, lc, k);
+
+%Schleife über die Anzahl der Realisierungen
+for i=1:anzRealMC
+    z = [k(1:5,:);
+        randn(length(k)-10,2);
+        k(51:55,:)];
+    x = CovSq * z + mu; %Erzeugen einer normalverteilten Zufallszahl
+    loads = [(floor(n/2)+1)*m, 2, Fex]; %Zufallszahl in den Kraftvektor stecken
+    u = trussFEM2D.solve(x,b,EAs,BCs,loads); %Verschiebungsw
     g(i,1) = u(OpKnoten-1);
     g(i,2) = u(OpKnoten);
     
@@ -45,44 +83,59 @@ end
 %%Auswertung
 mean(g )
 var(g )
-g = sort(g )
+g = sort(g );
 g(round(0.01*anzRealMC))
 
-%% Aufgabenteil a) FOSM
-loads = [(floor(n/2)+1)*m, 1, mu_X, (floor(n/2)+1)*m, 2, Fex];
+
+%%Aufgabenteil b) FOSM
 u = trussFEM2D.solve(k,b,EAs,BCs,loads);
 mu_g = u( (OpKnoten-1):OpKnoten );
-loads = [(floor(n/2)+1)*m, 1, 1, (floor(n/2)+1)*m, 2, 0];
-dudx = trussFEM2D.solve(k,b,EAs,BCs,loads);
-sig_g = dudx( (OpKnoten-1):OpKnoten ) * cov_X;
 
-%%Aufgabenteil b)
-mu_stat = 2; %??
-sig_stat = 0; %??
-lc = 1.5; %Korrelationslänge
+sig_g = [0 0];
+dx = 0.00001;
+for i=1:length(k)
+    %Finite Differenzen
+    c = zeros(length(k),2);
+    c(i,1) = dx;
+    u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
+    c(i,1) = -dx;
+    u_m =  trussFEM2D.solve((k+c),b,EAs,BCs,loads);
+    u_p = u_p(2 * OpKnoten -1);
+    u_m = u_m(2 * OpKnoten -1);
+    dgdxi = (u_p-u_m)/(2*dx);
+    %Finite Differenzen
+    c = zeros(length(k),2);
+    c(i,2) = dx;
+    u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
+    c(i,2) = -dx;
+    u_m =  trussFEM2D.solve((k+c),b,EAs,BCs,loads);
+    u_p = u_p(2 * OpKnoten);
+    u_m = u_m(2 * OpKnoten);
+    dgdyi = (u_p-u_m)/(2*dx);
 
-x = 0:0.4:4; %Länge 4m % 0.4m Knotenabstand
 
-nx = length(x);
+    for j=1:length(k)
+        %Finite Differenzen
+        c = zeros(length(k),2);
+        c(j,1) = dx;
+        u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
+        c(j,1) = -dx;
+        u_m =  trussFEM2D.solve((k+c),b,EAs,BCs,loads);
+        u_p = u_p(2 * OpKnoten -1);
+        u_m = u_m(2 * OpKnoten -1);
+        dgdxj = (u_p-u_m)/(2*dx);
+        %Finite Differenzen
+        c = zeros(length(k),2);
+        c(j,2) = dx;
+        u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
+        c(j,2) = -dx;
+        u_m =  trussFEM2D.solve((k+c),b,EAs,BCs,loads);
+        u_p = u_p(2 * OpKnoten);
+        u_m = u_m(2 * OpKnoten);
+        dgdyj = (u_p-u_m)/(2*dx);
 
-mu = ones(nx,1)*mu_stat;
-
-R = ones(nx,nx);
-for i = 1:nx
-    for j=i+1:nx
-        R(i,j) = exp( -(x(i)-x(j))^2 /lc^2);
-        R(j,i) = R(i,j);
+        sig_g = sig_g + [dgdxi*dgdxj*CovMa(i,j) dgdyi*dgdyj*CovMa(i,j)];
     end
 end
-CovMa = R*sig_stat^2;
-
-CovSq = sqrtm(CovMa);
-
-figure;hold on;
-for i=1:5
-    yr = CovSq * randn(nx,1) + mu;
-    plot(x,yr,'Marker','o')
-end
-
 
 end

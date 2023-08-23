@@ -26,7 +26,7 @@ end
 loads = [(floor(n/2)+1)*m, 2, Fex];
 % compute deformation Ku=F and plot deformed configuration
 u0 = trussFEM2D.solve(k,b,EAs,BCs,loads);
-trussFEM2D.plotTruss2D(k,b,rs,2,u0);
+trussFEM2D.plotTruss2D(k,b,rs,2,u0,1);
 
 %% Aufgabe 1 b)
 OpKnoten = (floor(n/2)*m) + 1; % Startwert für die Verschiebung in Punkt P bzw. Knoten 26 
@@ -53,10 +53,10 @@ A = x_opt;
 EAs = E*A;
 u = trussFEM2D.solve(k,b,EAs,BCs,loads);
 
-rs = sqrt(A(1:len_b))/pi;
+rs = sqrt(A(1:len_b)/pi);
 
 trussFEM2D.plotTruss2D(k,b,rs,3);
-trussFEM2D.plotTruss2D(k,b,rs,4,u);
+trussFEM2D.plotTruss2D(k,b,rs,4,u,1);
 
 function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
     len = length(x);
@@ -67,26 +67,34 @@ function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten)
     %Berechnung der Verschiebung
     [u,force,Ke,K] = trussFEM2D.solve(k,b,EAs,BCs,loads); %Da die Verschiebung auch positv werden kann, wird der Betrag der Verschiebung minimiert    
     u = -u;
+    %u = u.^2;
     %Es soll die y-Verschiebung in Knoten 26 optimiert werden
     f = u(2 * OpKnoten);
     df = gradf(Ke, K, u, x, b, OpKnoten);
     ddf = zeros(174,174);
-%     %Finite Differenzen
-%     dx = 0.00001;
-%     u_p =  trussFEM2D.solve(k,b,EAs + dx*ones(len),BCs,loads); %dx muss noch in u plus dx eingebaut werden
-%     u_m =  trussFEM2D.solve(k,b,EAs - dx*ones(len),BCs,loads);
-%     u_p = u_p(2 * OpKnoten);
-%     u_m = u_m(2 * OpKnoten);
-%     
-%     %Berechnung der Ableitungen über finite Differenzen
-%     df = (u_p-u_m)/(2*dx);
-%     ddf = (u_p-2*u+u_m)/dx^2; 
+    
+    % %Berechnung der Ableitungen über finite Differenzen
+    % dx = 0.0000001;
+    % for i=1:length(b)
+    %     z = zeros(len,1);
+    %     z(i) = E*dx;
+    %     u_pv =  trussFEM2D.solve(k,b,EAs + z,BCs,loads); %dx muss noch in u plus dx eingebaut werden
+    %     u_mv =  trussFEM2D.solve(k,b,EAs - z,BCs,loads);
+    %     u_p = u_pv(2 * OpKnoten);
+    %     u_m = u_mv(2 * OpKnoten);
+    %     dfini(:,i) = -(u_p-u_m)/(2*dx);
+    %     ddfini(:,i) = (u_pv-2*u+u_mv)/dx^2;
+    % end
+    % %Berechnung der Ableitungen über finite Differenzen
+    % valid = dfini(1,1:10) - df(1,1:10);
+
 end
 
 function g = ungl_bed(x, rmin, rmax)
     len = length(x);
     g(1:len)                = x - pi*rmin^2; 
     g( (len+1):(2*len) )    = pi*rmax^2 - x;
+    %g(2*len+1) = %%%%%Fortsetzen u<=0
 end
 function h = gl_bed(x, l_stb, V0)
     
