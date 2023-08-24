@@ -1,4 +1,4 @@
-function df = gradf(Ke, K, u, x, b, OpKnoten,nz)
+function df = gradfr(Ke, K, u, x, b, OpKnoten,nz)
     if nargin<7
         nz = 1;
     end
@@ -22,8 +22,9 @@ function df = gradf(Ke, K, u, x, b, OpKnoten,nz)
     dukdx = zeros(1,len);
     for i=1:length(Ke)
 
-        dKdA = Ke(:,:,i)/x(i);
-        dKdx = dKdA;
+        dKdA = Ke(:,:,i)/(pi*x(i)^2);
+        dAdr = 2*pi*x(i);
+        dKdx = dKdA*dAdr;
         u_e = [u(2*b(i,1)-1); u(2*b(i,1)); u(2*b(i,2)-1); u(2*b(i,2))];
         lambda_e = [lambda(2*b(i,1)-1); lambda(2*b(i,1)); lambda(2*b(i,2)-1); lambda(2*b(i,2))];
         dukdx(1,i) = lambda_e' * dKdx * u_e;

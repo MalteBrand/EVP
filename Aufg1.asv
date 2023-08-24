@@ -1,7 +1,7 @@
 function Aufg1()
     
-    % global diff_gradabl;
-    % diff_gradabl = [0,0,0];
+    global diff_gradabl;
+    diff_gradabl = [0,0,0];
 
     %Initialparameter
     [n,m,rmin,rmax,dx,dy,r0,A,E,Fex,k,b,nob,EAs,rs,BCs,loads] = preprocess();
@@ -41,19 +41,9 @@ function Aufg1()
     %Optimierter Plot mit Last
     trussFEM2D.plotTruss2D(k,b,rs,4,u,1);
     
-    % ndiff = length(diff_gradabl);
-    % tdiff = 1:1:ndiff;
-    % figure(5);
-    % grid on
-    % hold on
-    % plot(tdiff, diff_gradabl(:, 1), 'g')
-    % plot(tdiff, diff_gradabl(:, 2), 'b')
-    % plot(tdiff, diff_gradabl(:, 3), 'r--')
-    % xlabel('Anzahl der Iterationen')
-    % ylabel('Wert der Ableitung')
-    % legend('Differenz','Explizite Ableitung','Finite Differenzen')
-    % title('Ableitung in Stab 40')
-    
+    ndiff = length(diff_gradabl);
+    tdiff = 0:1:ndiff;
+    plot(t,tdiff)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%c) Optimieren des Fachwerks nach Stabradius
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,17 +77,18 @@ function Aufg1()
         %Berechnung der Verschiebung
         [u,~,Ke,K] = trussFEM2D.solve(k,b,EAs,BCs,loads); 
         u = -u; %Verschiebung kann positiv werden
+        %u = abs(u);
+        %u = u.^2;
     
         %Es soll die y-Verschiebung in Knoten 26 optimiert werden
         f = u(2 * OpKnoten);
         df = gradf(Ke, K, u, x, b, OpKnoten);
         ddf = zeros(174,174);
     
-        % dfini = gradfini(k, b, E, EAs, BCs, loads, OpKnoten);
-        % valid = abs(dfini - df);
-        % [ndiff,~] = size(diff_gradabl);
-        % diff_gradabl(ndiff+1,:) = [valid(1,40) , df(1,40) , dfini(1,40)];
-        
+        %dfini = gradfini(k, b, E, EAs, BCs, loads, OpKnoten);
+        % valid = dfini(1,1:10) - df(1,1:10);
+        ndiff = length(diff_gradabl);
+        diff_gradabl(ndiff+1,:) = [valid(1,40),df(1,40),dfini(1,40)
     end
     
     function [g,dg] = ungl_bed(x, rmin, rmax, k, b, E, BCs, loads)
@@ -143,7 +134,9 @@ function Aufg1()
         %Berechnung der Verschiebung
         [u,~,Ke,K] = trussFEM2D.solve(k,b,EAs,BCs,loads); 
         u = -u; %Verschiebung kann positiv werden
-
+        %u = abs(u);
+        %u = u.^2;
+    
         %Es soll die y-Verschiebung in Knoten 26 optimiert werden
         f = u(2 * OpKnoten);
         df = gradfr(Ke, K, u, x, b, OpKnoten);

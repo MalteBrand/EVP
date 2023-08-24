@@ -56,14 +56,14 @@ function Aufg3(anzRealMC)
         g( (len+1):(2*len) )    = -(pi*rmax^2 - x); %r < rmax
         EAs = E*x;
         
-        %[mu_u,sigma2_u,dmu_u,dsigma2_u] = MC_FEM_RDO(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat);
-        %g(2*len+1) = mu_u(2); % u < 0
+        [mu_u,sigma2_u,dmu_u,dsigma2_u] = MC_FEM_RDO(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat);
+        g(2*len+1) = -mu_u(2); % u < 0
 
         dg = zeros((2*len + 1), len);
 
         dg((1:len),:) = -1* eye(len);
         dg( (len+1):(2*len),: ) = eye(len);
-        %dg(2*len+1,:) = dmu_u(2,:);
+        dg(2*len+1,:) = -dmu_u(2,:);
 
     end
 
@@ -90,24 +90,22 @@ function Aufg3(anzRealMC)
         nbeq = gl_bed(x, V0, k, b);
     end
 
-    function [mu_g,sigma2_g] = FOSM_FEM_RDO(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat)
+    function [mu_g,sigma2_g,dmu_g,dsigma2_g] = FOSM_FEM_RDO(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat)
         
         % deterministische Eingangsgrößen
         EAs = E*x;
 
         %rng default;
-
-        dmu_g = zeros(2,174);
-        sigma2_g = zeros(2,1);
+        g1 = zeros(anzRealMC,1);
+        g2 = zeros(anzRealMC,1);
+        dg1 = zeros(anzRealMC,174);
+        dg2 = zeros(anzRealMC,174);
         dsigma2_g = zeros(2,174);
 
-        [u,~,Ke,K] = trussFEM2D.solve(k,b,EAs,BCs,loads);
+        u = trussFEM2D.solve(k,b,EAs,BCs,loads);
         mu_g = -u( (2*OpKnoten-1):2*OpKnoten );
-        dmu_g(1,:) = gradf(Ke, K, u, x, b, OpKnoten,2);
-        dmu_g(2,:) = gradf(Ke, K, u, x, b, OpKnoten);
-
-        sigma2_g = zeros(2,1);
-        dsigma2_g = zeros(2,174);
+        
+        var_FOSMb = [0 0];
         dx = 0.00001;
         for i=1:length(k)
             %Finite Differenzen
@@ -115,16 +113,16 @@ function Aufg3(anzRealMC)
             c(i,1) = dx;
             u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
             u_m =  trussFEM2D.solve((k-c),b,EAs,BCs,loads);
-            u_p = -u_p(2*OpKnoten -1);
-            u_m = -u_m(2*OpKnoten -1);
+            u_p = u_p(2*OpKnoten -1);
+            u_m = u_m(2*OpKnoten -1);
             dgdxi = (u_p-u_m)/(2*dx);
             %Finite Differenzen
             c = zeros(length(k),2);
             c(i,2) = dx;
             u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
             u_m =  trussFEM2D.solve((k-c),b,EAs,BCs,loads);
-            u_p = -u_p(2*OpKnoten);
-            u_m = -u_m(2*OpKnoten);
+            u_p = u_p(2*OpKnoten);
+            u_m = u_m(2*OpKnoten);
             dgdyi = (u_p-u_m)/(2*dx);
         
         
@@ -133,22 +131,39 @@ function Aufg3(anzRealMC)
                 c = zeros(length(k),2);
                 c(j,1) = dx;
                 u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
-                u_m =  trussFEM2D.solve((k-c),b,EAs,BCs,loads);
-                u_p = -u_p(2*OpKnoten -1);
-                u_m = -u_m(2*OpKnoten -1);
+                c(j,1) = -dx;
+                u_m =  trussFEM2D.solve((k+c),b,EAs,BCs,loads);
+                u_p = u_p(2*OpKnoten -1);
+                u_m = u_m(2*OpKnoten -1);
                 dgdxj = (u_p-u_m)/(2*dx);
                 %Finite Differenzen
                 c = zeros(length(k),2);
                 c(j,2) = dx;
                 u_p =  trussFEM2D.solve((k+c),b,EAs,BCs,loads); %dx muss noch in u plus dx eingebaut werden
-                u_m =  trussFEM2D.solve((k-c),b,EAs,BCs,loads);
-                u_p = -u_p(2*OpKnoten);
-                u_m = -u_m(2*OpKnoten);
+                c(j,2) = -dx;
+                u_m =  trussFEM2D.solve((k+c),b,EAs,BCs,loads);
+                u_p = u_p(2*OpKnoten);
+                u_m = u_m(2*OpKnoten);
                 dgdyj = (u_p-u_m)/(2*dx);
         
-                sigma2_g = sigma2_g + [dgdxi*dgdxj*CovMa(i,j); dgdyi*dgdyj*CovMa(i,j)];
+                var_FOSMb = var_FOSMb + [dgdxi*dgdxj*CovMa(i,j) dgdyi*dgdyj*CovMa(i,j)];
             end
         end
+
+        g = [g1; g2];
+    	dg = [dg1;dg2];
+        % Mittelwert, Varianz 
+        mu_g1 = mean(g1);
+        mu_g2 = mean(g2);
+        sigma2_g1 = var(g1);
+        sigma2_g2 = var(g2);
+        dmu_g1 = mean(dg1,1);
+        dmu_g2 = mean(dg2,1);
+
+        mu_g = [mu_g1; mu_g2];
+        dmu_g = [dmu_g1; dmu_g2];
+        sigma2_g = [sigma2_g1; sigma2_g2];
+        dsigma2_g = 2/(anzRealMC-1) * dsigma2_g - [2*mu_g1*dmu_g1; 2*mu_g2*dmu_g2];
 
     end
 
