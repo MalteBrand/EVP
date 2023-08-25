@@ -25,7 +25,7 @@ function Aufg1()
     fhgtb = @(x) nebenBedingungen4toolbox(x, rmin, rmax, V0, k, b, E, BCs, loads);
     
     %Optimierung mit SQP
-    options = optimoptions('fmincon','Algorithm','sqp','Display','iter','StepTolerance',0.000000000001);
+    options = optimoptions('fmincon','SpecifyObjectiveGradient',true,'CheckGradients',true,'Algorithm','sqp','Display','iter','StepTolerance',0.000000000001);
     x_opt = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options);
     
     A = x_opt;
@@ -66,7 +66,7 @@ function Aufg1()
     fhgtbc = @(x) nebenBedingungen4toolboxc(x, rmin, rmax, V0, k, b, E, BCs, loads);
     
     %Optimierung mit SQP
-    options = optimoptions('fmincon','Algorithm','sqp','Display','iter','StepTolerance',0.000000000001);
+    options = optimoptions('fmincon','SpecifyObjectiveGradient',true,'CheckGradients',true,'Algorithm','sqp','Display','iter','StepTolerance',0.000000000001);
     x_opt = fmincon(fhfc,x0,[],[],[],[],[],[],fhgtbc,options);
     
     r_opt = x_opt;
