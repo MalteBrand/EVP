@@ -1,5 +1,7 @@
 function Aufg1()
-    
+
+    addpath(fullfile(".", "Aufg1"))
+
     global diff_gradabl;
     diff_gradabl = [0,0,0];
 
@@ -9,11 +11,11 @@ function Aufg1()
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%a) Erstellen eines Referenzentwurf
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    loads = [(floor(n/2)+1)*m, 1, 15;
-             (floor(n/2)+1)*m, 2, -100];
+
     u0 = trussFEM2D.solve(k,b,EAs,BCs,loads);
-    trussFEM2D.plotTruss2D(k,b,rs,1);
-    trussFEM2D.plotTruss2D(k,b,rs,2,u0,1);
+    %trussFEM2D.plotTruss2D(k,b,rs,1);
+    trussFEM2D.plotTruss2D(k,b,rs,1,u0,1);
+    title('Referenz')
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%b) Optimieren des Fachwerks nach Stabquerschnitt
@@ -40,9 +42,10 @@ function Aufg1()
     rs = sqrt(A/pi);
     
     %Optimierter Plot ohne Last
-    trussFEM2D.plotTruss2D(k,b,rs,3);
+    %trussFEM2D.plotTruss2D(k,b,rs,3);
     %Optimierter Plot mit Last
-    trussFEM2D.plotTruss2D(k,b,rs,4,u1,1);
+    trussFEM2D.plotTruss2D(k,b,rs,2,u1,1);
+    title('Optimierung nach Querschnitt')
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%c) Optimieren des Fachwerks nach Stabradius
@@ -67,15 +70,16 @@ function Aufg1()
     u2 = trussFEM2D.solve(k,b,EAs,BCs,loads);
 
     %Optimierter Plot ohne Last
-    trussFEM2D.plotTruss2D(k,b,r_opt,5);
+    %trussFEM2D.plotTruss2D(k,b,r_opt,5);
     %Optimierter Plot mit Last
-    trussFEM2D.plotTruss2D(k,b,r_opt,6,u2,1);
+    trussFEM2D.plotTruss2D(k,b,r_opt,3,u2,1);
+    title('Optimierung nach Radius')
     
     x = 0:0.4:4;
     u0p = [u0(2),u0(12),u0(22),u0(32),u0(42),u0(52),u0(62),u0(72),u0(82),u0(92),u0(102)];
     u1p = [u1(2),u1(12),u1(22),u1(32),u1(42),u1(52),u1(62),u1(72),u1(82),u1(92),u1(102)];
     u2p = [u2(2),u2(12),u2(22),u2(32),u2(42),u2(52),u2(62),u2(72),u2(82),u2(92),u2(102)];
-    figure(7);
+    figure(4);
     grid on
     hold on
     plot(x,u0p,'r')
@@ -89,7 +93,7 @@ function Aufg1()
     %Plot für die Differenz
     ndiff = length(diff_gradabl);
     tdiff = 1:1:ndiff;
-    figure(8);
+    figure(5);
     grid on
     hold on
     %plot(tdiff, diff_gradabl(:, 1), 'g')
@@ -99,7 +103,7 @@ function Aufg1()
     ylabel('Wert der Ableitung')
     legend('Differenz','Explizite Ableitung','Finite Differenzen')
     title('Ableitung in Stab 16')
-    figure(9);
+    figure(6);
     grid on
     hold on
     plot(tdiff, diff_gradabl(:, 1), 'b')

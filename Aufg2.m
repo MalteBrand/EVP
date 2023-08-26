@@ -1,6 +1,8 @@
 function Aufg2(anzRealMC)
-anzRealMC = 1000;
-addpath(fullfile(".", "Verteilungen"))
+
+addpath(fullfile(".", "Aufg2\Verteilungen"))
+addpath(fullfile(".", "Aufg1"))
+addpath(fullfile(".", "Aufg2"))
 
 [n,m,rmin,rmax,dx,dy,r0,A,E,Fex,k,b,nob,EAs,rs,BCs,loads] = preprocess();
 
@@ -37,7 +39,7 @@ x = g(:,1);
 EX = mu_MCa(1,1);
 VarX = var_MCa(1,1);
 
-figure(1)
+figure(7)
 histfit(x);
 title('Histogramm der Verschiebung von Punkt P in X-Richtung a)');
 xlabel('Verschiebung von Punkt P in X-Richtung[m]');
@@ -91,11 +93,15 @@ sig_FOSMa = [sqrt(var_FOSMa(1)); sqrt(var_FOSMa(2))]
 
 y_grada = [dudf(1,1), dudfini(1,1), valid_grad(1,1); dudf(2,1), dudfini(2,1), valid_grad(2,1)] 
 
+fig = uifigure;
+uitable(fig,'Data', y_grada, 'ColumnName', {'Explizit', 'Finite Differenzen', 'Differenz'});
+title('Validierung Explizit/Finite Differenzen 2a)');
+
 x_pdf = -4*sig_MCa(1,1) : 0.0001*sig_MCa(1,1) : 4*sig_MCa(1,1); % Zur Darstellung des x Achsen Abschnittes
 %x_pdf_FOSMa = -1*mu_FOSMa(1,1) : 0.001*mu_FOSMa(1,1) : 3*mu_FOSMa(1,1);
 p_MC = pdf('Normal', x_pdf, mu_MCa(1,1), sig_MCa(1,1));
 p_FOSM = pdf('Normal', x_pdf, mu_FOSMa(1,1), sig_FOSMa(1,1));
-figure(2)
+figure(9)
 hold on
 plot(x_pdf, p_MC, 'b');
 plot(x_pdf, p_FOSM, 'r--');
@@ -148,7 +154,7 @@ x = g1;
 EX = mu_g1;
 VarX = var_g1;
 
-figure(3)
+figure(10)
 histfit(x);
 title('Histogramm der Verschiebung von Punkt P in X-Richtung b)');
 xlabel('Verschiebung von Punkt P in X-Richtung[m]');
@@ -173,7 +179,7 @@ x = g2;
 EX = mu_g2;
 VarX = var_g2;
 
-figure(4)
+figure(11)
 histfit(x);
 title('Histogramm der Verschiebung von Punkt P in Y-Richtung b)');
 xlabel('Verschiebung von Punkt P in Y-Richtung[m]');
@@ -279,7 +285,7 @@ x_pdfb = (-4*sig_MCb(1,1) + mu_MCb(1,1)) : 0.0001*sig_MCb(1,1) : (4*sig_MCb(1,1)
 %x_pdf_FOSMa = -1*mu_FOSMa(1,1) : 0.001*mu_FOSMa(1,1) : 3*mu_FOSMa(1,1);
 p_MCb = pdf('Normal', x_pdfb, mu_MCb(1,1), sig_MCb(1,1));
 p_FOSMb = pdf('Normal', x_pdfb, mu_FOSMb(1,1), sig_FOSMb(1,1));
-figure(5)
+figure(12)
 hold on
 plot(x_pdfb, p_MCb, 'b');
 plot(x_pdfb, p_FOSMb, 'r--');
@@ -292,7 +298,7 @@ x_pdfb = (-4*sig_MCb(2,1) + mu_MCb(2,1)) : 0.0001*sig_MCb(2,1) : (4*sig_MCb(2,1)
 %x_pdf_FOSMa = -1*mu_FOSMa(1,1) : 0.001*mu_FOSMa(1,1) : 3*mu_FOSMa(1,1);
 p_MCb = pdf('Normal', x_pdfb, mu_MCb(2,1), sig_MCb(2,1));
 p_FOSMb = pdf('Normal', x_pdfb, mu_FOSMb(2,1), sig_FOSMb(2,1));
-figure(6)
+figure(13)
 hold on
 plot(x_pdfb, p_MCb, 'b');
 plot(x_pdfb, p_FOSMb, 'r--');

@@ -1,8 +1,10 @@
 function Aufg3(anzRealMC)
-    anzRealMC = 1000;
+    addpath(fullfile(".", "Aufg1"))
+    addpath(fullfile(".", "Aufg2"))
+    addpath(fullfile(".", "Aufg3"))
     [n,m,rmin,rmax,dx,dy,r0,A,E,Fex,k,b,nob,EAs,rs,BCs,loads] = preprocess();
-    u0 = trussFEM2D.solve(k,b,EAs,BCs,loads);
-    trussFEM2D.plotTruss2D(k,b,rs,1,u0,1);
+    %u0 = trussFEM2D.solve(k,b,EAs,BCs,loads);
+    %trussFEM2D.plotTruss2D(k,b,rs,1,u0,1);
     % stochastische Eingangsgrößen
     mu_stat = k; %Erwartungswert entspricht den unverschobenen Knotenpositionen
     sig_stat = 0.1*0.3; % 10% der kleinsten Stablänge
@@ -31,9 +33,9 @@ function Aufg3(anzRealMC)
     rs = sqrt(A/pi);
     
     %Optimierter Plot ohne Last
-    trussFEM2D.plotTruss2D(k,b,rs,2);
+    %trussFEM2D.plotTruss2D(k,b,rs,2);
     %Optimierter Plot mit Last
-    trussFEM2D.plotTruss2D(k,b,rs,3,u,1);
+    trussFEM2D.plotTruss2D(k,b,rs,14,u,1);
 
     function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat)
         

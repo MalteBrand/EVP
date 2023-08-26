@@ -11,4 +11,5 @@ Aufg1()
 
 Aufg2(anzRealMC)
 
+%Am besten parallel-processing starten (parpool() in die Command-line)
 Aufg3(anzRealMC)
