@@ -2,13 +2,13 @@ function [n,m,rmin,rmax,dx,dy,r0,A,E,Fex,k,b,nob,EAs,rs,BCs,loads] = preprocess(
 
     % Parameters
     n=11; m=5; %n Number nodes Horizonal %m Number of Nodes Vertical 
-    dx = 0.4;  dy = 0.3; %Abstand der einzelnen Knoten in x und y Richtung
-    rmin = 0.0001; %min Querschnittsradius
-    rmax = 0.01; %max Querschnittsradius
-    r0 = 0.005; %Startraduis
-    A = r0^2*pi; %Querschnittsfläche
-    E = 210 *10^6; %E-Modul
-    Fex = -100; %Äußere Kraft
+    dx = 0.4;  dy = 0.3; %Abstand der einzelnen Knoten in x und y Richtung [m]
+    rmin = 0.0001; %min Querschnittsradius [m]
+    rmax = 0.01; %max Querschnittsradius [m]
+    r0 = 0.005; %Startraduis [m]
+    A = r0^2*pi; %Querschnittsfläche [m^2]
+    E = 210 *10^6; %E-Modul [kN/m^2]
+    Fex = -100; %Äußere Kraft [kN]
     % create geometry & plot initial configuration
     [k,b] = trussFEM2D.truss_preProcess2D(n,m,dx,dy); %k Positionen der Knoten %b Welche Knoten miteinander Verbunden sind
     nob=size(b,1);

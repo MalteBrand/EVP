@@ -1,5 +1,5 @@
 function Aufg3(anzRealMC)
-    anzRealMC = 1000;
+    anzRealMC = 2000;
     [n,m,rmin,rmax,dx,dy,r0,A,E,Fex,k,b,nob,EAs,rs,BCs,loads] = preprocess();
     u0 = trussFEM2D.solve(k,b,EAs,BCs,loads);
     trussFEM2D.plotTruss2D(k,b,rs,1,u0,1);
@@ -119,9 +119,13 @@ function Aufg3(anzRealMC)
             if nb == 1
                 u = -u;
             end
-            g1(i,1) = u(2*OpKnoten-1);
+            g1(i,1) = abs(u(2*OpKnoten-1));
             g2(i,1) = -u(2*OpKnoten);
-
+            if u(2*OpKnoten-1) >= 0 
+                dg1(i,:) = gradf(Ke, K, u, x, b, OpKnoten,2);
+            else
+                dg1(i,:) = gradf(Ke, K, u, x, b, OpKnoten,2);
+                
             dg1(i,:) = gradf(Ke, K, u, x, b, OpKnoten,2);
             dg2(i,:) = gradf(Ke, K, -u, x, b, OpKnoten);
         
@@ -136,12 +140,7 @@ function Aufg3(anzRealMC)
         mu_g2 = mean(g2);
         sigma2_g1 = var(g1);
         sigma2_g2 = var(g2);
-        if mu_g1 >= 0
-            dmu_g1 = mean(dg1,1);
-        else
-            dmu_g1 = -mean(dg1,1);
-        end
-        mu_g1 = abs(mu_g1);
+        dmu_g1 = mean(dg1,1);
         dmu_g2 = mean(dg2,1);
 
         mu_g = [mu_g1; mu_g2];
