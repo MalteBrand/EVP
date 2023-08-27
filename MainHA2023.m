@@ -7,9 +7,9 @@
 clear, clc, close all;
 anzRealMC = 1000;  % Anzahl Realisierungen für Monte Carlo Simulation
 
-Aufg1()
+ x_opt = Aufg1();
 
 Aufg2(anzRealMC)
 
 %Am besten parallel-processing starten (parpool() in die Command-line)
-Aufg3(anzRealMC)
+Aufg3(anzRealMC, x_opt)

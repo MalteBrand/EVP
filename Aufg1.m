@@ -1,4 +1,4 @@
-function Aufg1()
+function x_optb =  Aufg1()
 
     addpath(fullfile(".", "Aufg1"))
 
@@ -31,9 +31,9 @@ function Aufg1()
     %Optimierung mit SQP
     options = optimoptions('fmincon','SpecifyObjectiveGradient',true,'SpecifyConstraintGradient',true,'Algorithm','sqp','Display','iter','StepTolerance',0.000000000001);
     %options = optimoptions('fmincon','SpecifyObjectiveGradient',true,'CheckGradients',true,'Algorithm','sqp','Display','iter','StepTolerance',0.000000000001);
-    x_opt = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options);
+    x_optb = fmincon(fhf,x0,[],[],[],[],[],[],fhgtb,options);
     
-    A = x_opt;
+    A = x_optb;
     EAs = E*A;
     
     %Optimierte Verschiebung

@@ -188,6 +188,13 @@ function Aufg3(anzRealMC, x_optb)
                 mu_rob2(1), mu_rob2(2),var_rob2(1), var_rob2(2), sig_rob2(1),sig_rob2(2)];
 
 
+    fig = uifigure;
+    uitable(fig,'Data', data1, 'ColumnName', {'mu_x', 'mu_y', 'var_x', 'var_y','var_x', 'var_y'});
+    title('Vergleich bei streuender Horizontalkraft');
+    fig = uifigure;
+    uitable(fig,'Data', data2, 'ColumnName', {'mu_x', 'mu_y', 'var_x', 'var_y','var_x', 'var_y'});
+    title('Vergleich bei streuenden Knoten');
+
     function [f,df,ddf] = ziel(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat)
         
         [mu_u,sigma2_u,dmu_u,dsigma2_u] = MC_FEM_RDO(x, E, k, b, BCs, loads, OpKnoten,anzRealMC, CovSq, mu_stat);
